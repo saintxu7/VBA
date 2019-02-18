@@ -1,0 +1,139 @@
+-------------------------------------------------------------------------------------
+'1.Create Outlook Calendar items from Excel
+
+Sub NewAppointment()
+
+    Application.ScreenUpdating = False
+    
+    Dim ol As Outlook.Application
+    Set ol = CreateObject("Outlook.Application")
+    Dim t As AppointmentItem
+    
+    rend = Sheet1.Range("a65536").End(xlUp).Row
+    rend2 = Sheet4.Range("a65536").End(xlUp).Row + 1
+    
+    For r = 4 To Range("a65536").End(xlUp).Row
+    
+        Set t = ol.CreateItem(olAppointmentItem)
+        With t
+              .Subject = Range("subject").Cells(r, 1) 'ÊÂ¼þÃû³Æ
+              .Body = Range("Body").Cells(r, 1) 'ÊÂ¼þÄÚÈÝ
+              .Start = Range("Start").Cells(r, 1) '¿ªÊ¼Ê±¼ä
+              
+              If Range("Duration").Cells(r, 1) = "È«Ìì" Then 'ÅÐ¶ÏÊÇ·ñÎªÈ«ÌìÊÂÏî
+              .AllDayEvent = True
+              
+              Else
+              
+              .Duration = Range("Duration").Cells(r, 1)  '³ÖÐøÊ±¼ä
+              
+              End If
+              
+              If Range("Reminder").Cells(r, 1) = "" Then 'ÅÐ¶ÏÊÇ·ñÎªÐèÒªÉè¶¨ÌáÐÑÄÖÁå
+              
+              .ReminderSet = False
+              
+              End If
+              
+              .ReminderMinutesBeforeStart = Range("Reminder").Cells(r, 1)  'ÌáÇ°N·ÖÖÓÌáÐÑ
+               
+              .Location = Range("Location").Cells(r, 1)
+              .Categories = Range("Category").Cells(r, 1)
+              
+              .Save
+              
+              'ÅÐ¶ÏÊÇ·ñÎªÑ­»·ÈÎÎñ£¬ÈôÊÇÔòµ¯³ö´°¿ÚÊÖ¶¯´´½¨Ñ­»·
+              If Range("Recurrence").Cells(r, 1) = "Y" Then
+              
+              .Display (True)
+              
+              End If
+              
+              '.Display
+              
+        End With
+        
+    Next
+    
+    '±¸·Ýµ½ÈÎÎñ¿â
+    Sheet1.Rows(4 & ":" & rend).Copy
+    Sheet4.Select
+    Cells(rend2, 1).Select
+    ActiveSheet.Paste
+    Sheet1.Select
+    Range("A4").Select
+
+    
+    Application.ScreenUpdating = True
+    
+End Sub
+
+-------------------------------------------------------------------------------------
+'2.Collect all Outlook Calendar items to Excel
+'
+' **** Set reference to Outlook Object Library
+'
+Sub ShowCalendar()
+Dim olApp As Outlook.Application
+Dim olNs As Namespace
+On Error Resume Next
+Set olApp = GetObject(, "Outlook.Application")
+If Err.Number = 429 Then
+Set olApp = CreateObject("Outlook.Application")
+End If
+On Error GoTo 0
+Set olNs = olApp.GetNamespace("MAPI")
+If olApp.ActiveExplorer Is Nothing Then
+olApp.Explorers.Add _
+(olNs.GetDefaultFolder(olFolderCalendar)).Activate
+Else
+Set olApp.ActiveExplorer.CurrentFolder = _
+olNs.GetDefaultFolder(olFolderCalendar)
+
+End If
+Set olNs = Nothing
+Set olApp = Nothing
+End Sub
+
+
+-------------------------------------------------------------------------------------
+'3. Retrieving Outlook Appointment to Excel
+'
+Sub GetOutlookAppiontment()
+Dim olApp As Outlook.Application
+Dim olNs As Namespace
+Dim olFldr As MAPIFolder
+Dim olApt As AppointmentItem
+Set olApp = New Outlook.Application
+Set olNs = olApp.GetNamespace("MAPI")
+Set olFldr = olNs.GetDefaultFolder(olFolderCalendar)
+Dim arr As Variant
+
+i = 1
+
+
+For Each olApt In olFldr.Items
+
+With olApt
+
+If olApt.Subject = "Ñ­»·²âÊÔ" Then
+
+arr2 = Array(i, .Subject, .Body, .Start, .Duration, .End, .ReminderMinutesBeforeStart, .Location, .Categories, .RecurrenceState, .CreationTime, .GetRecurrencePattern.RecurrenceType)
+
+Sheet2.Cells(i + 1, 1).Resize(1, UBound(arr2) + 1) = arr2
+
+i = i + 1
+
+End If
+
+End With
+
+Next olApt
+
+Set olApt = Nothing
+Set olFldr = Nothing
+Set olNs = Nothing
+Set olApp = Nothing
+End Sub
+
+
